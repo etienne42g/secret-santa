@@ -13,8 +13,8 @@ passport.use(new GoogleStrategy({
       const email = profile.emails[0].value;
       let user = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
       if (user.rows.length === 0) {
-        user = await pool.query('INSERT INTO users (email, name) VALUES ($1, $2) RETURNING *', [email, profile.displayName]);
-        user = user.rows[0]; // Assurez-vous de définir user ici
+        // Si l'utilisateur n'existe pas dans la base de données, refuser l'authentification
+        return done(null, false, { message: 'Accès refusé : votre adresse e-mail n\'est pas autorisée.' });
       } else {
         user = user.rows[0]; // Assurez-vous de définir user ici
       }
@@ -30,12 +30,15 @@ passport.serializeUser((user, done) => {
 });
 
 passport.deserializeUser(async (id, done) => {
-    try {
-      const user = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-      done(null, user.rows[0]);
-    } catch (err) {
-      done(err, null);
+  try {
+    const user = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    if (user.rows.length === 0) {
+      return done(new Error('Utilisateur non trouvé'), null);
     }
-  });
+    done(null, user.rows[0]);
+  } catch (err) {
+    done(err, null);
+  }
+});
 
 module.exports = passport;

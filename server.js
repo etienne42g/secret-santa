@@ -61,7 +61,7 @@ app.get('/auth/google', passport.authenticate('google', {
 }));
 
 app.get('/auth/google/callback', passport.authenticate('google', {
-    failureRedirect: '/'
+    failureRedirect: '/404'
   }), (req, res) => {
     const user = {
       id: req.user.id,
@@ -85,6 +85,10 @@ app.get('/view-pair', ensureAuthenticated, (req, res) => {
 // Route pour servir la page d'administration
 app.get('/admin', ensureAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
+  });
+
+app.get('/404', (req, res) => {
+    res.sendFile(path.join(__dirname, 'page404.html'));
   });
 
 // Route pour servir la page d'administration
