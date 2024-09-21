@@ -1,0 +1,39 @@
+/* styles.css */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+body {
+    background-color: #f8f9fa;
+    background-image: url('https://www.transparenttextures.com/patterns/brick-wall-dark.png');
+    color: #343a40;
+    font-family: 'Arial', sans-serif;
+}
+
+#app {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.btn-christmas {
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+}
+
+.btn-christmas:hover {
+    background-color: #218838;
+}
+
+.christmas-decoration {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.christmas-decoration img {
+    width: 100px;
+    height: auto;
+}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secret Santa</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f8f9fa;
+      background-image: url('https://www.transparenttextures.com/patterns/brick-wall-dark.png');
+      color: #343a40;
+      font-family: 'Arial', sans-serif;
+    }
+    #app {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    .btn-christmas {
+      background-color: #28a745;
+      color: #fff;
+      border: none;
+    }
+    .btn-christmas:hover {
+      background-color: #218838;
+    }
+    .christmas-decoration {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .christmas-decoration img {
+      width: 100px;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="container mt-5">
+    <div id="header" class="mb-4">
+      <span id="welcome-message" class="h4"></span>
+      <button class="btn btn-danger ml-3" onclick="logout()">Déconnexion</button>
+    </div>
+    <div class="christmas-decoration">
+      <img src="https://img.icons8.com/?size=100&id=p2t1QGXdZaMz&format=png&color=000000" alt="Christmas Tree">
+      <img src="https://img.icons8.com/emoji/96/000000/santa-claus-emoji.png" alt="Santa Claus">
+      <img src="https://img.icons8.com/emoji/96/000000/snowman-emoji.png" alt="Snowman">
+    </div>
+    <h1 class="text-center mb-4">Secret Santa</h1>
+    <div id="user-form" class="form-group">
+      <input type="text" id="name" class="form-control mb-2" placeholder="Nom">
+      <input type="text" id="spouse" class="form-control mb-2" placeholder="Conjoint(e)">
+      <input type="email" id="email" class="form-control mb-2" placeholder="Email">
+      <button class="btn btn-christmas mt-2" onclick="addUser()">Ajouter</button>
+      <div id="error-message" class="text-danger mt-2"></div>
+    </div>
+    <div id="user-list" class="list-group mb-4"></div>
+    <button class="btn btn-christmas mb-4" onclick="generatePairs()">Générer les paires</button>
+    <div id="pairs-list" class="list-group mb-4"></div>
+    <div id="view-pair-form" class="form-group mb-4">
+      <input type="text" id="view-name" class="form-control mb-2" placeholder="Votre nom">
+      <button class="btn btn-christmas mt-2" onclick="viewPair()">Voir à qui je donne</button>
+    </div>
+    <div id="pair-result" class="mt-2"></div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const user = JSON.parse(localStorage.getItem('user'));
+      if (user) {
+        document.getElementById('welcome-message').textContent = `Bonjour, ${user.name}`;
+      }
+    });
+
+    async function logout() {
+      await fetch('http://localhost:3000/logout', {
+        method: 'GET',
+      });
+      localStorage.removeItem('user');
+      window.location.href = '/';
+    }
+  </script>
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="./script.js"></script>
+</body>
+</html>
