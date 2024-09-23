@@ -13,6 +13,32 @@ router.get('/users', async (req, res) => {
   }
 });
 
+// Middleware pour vérifier l'authentification
+function ensureAuthenticated(req, res, next) {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.redirect('/login');
+}
+// Route pour envoyer un message
+router.post('/messages', ensureAuthenticated, async (req, res) => {
+  const { sender, receiver, message } = req.body;
+  console.log('Requête reçue:', req.body); // Log des données reçues
+
+  try {
+    // Insertion du message dans la base de données
+    const result = await pool.query(
+      'INSERT INTO messages (sender, receiver, message) VALUES ($1, $2, $3)',
+      [sender, receiver, message]
+    );
+    console.log('Résultat de l\'insertion:', result); // Log du résultat de l'insertion
+    res.status(200).send('Message envoyé avec succès');
+  } catch (error) {
+    console.error('Erreur lors de l\'insertion du message:', error);
+    res.status(500).send('Erreur lors de l\'envoi du message');
+  }
+});
+
 // Route pour ajouter un utilisateur
 router.post('/users', async (req, res) => {
   try {

@@ -1,153 +1,175 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Voir à qui je donne - Secret Santa</title>
-  <link rel="stylesheet" href="./styles.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
-  <script src="./Winwheel.min.js"></script>
-  <style>
-   .pointer {
-  position: relative;
-  top: 25px;
-  left: 45%;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 20px 40px 20px;
-  border-color: transparent transparent #ff0000 transparent;
-  transform: rotate(180deg);
-}
-  </style>
-</head>
-<body>
-  <div id="app" class="container">
-    <div class="christmas-decoration">
-      <img src="https://img.icons8.com/?size=100&id=p2t1QGXdZaMz&format=png&color=000000" alt="Christmas Tree">
-      <img src="https://img.icons8.com/emoji/96/000000/santa-claus-emoji.png" alt="Santa Claus">
-      <img src="https://img.icons8.com/emoji/96/000000/snowman-emoji.png" alt="Snowman">
-    </div>
-    <h1 class="mb-4">Voir à qui je donne</h1>
-    <div id="welcome-message" class="mt-2"></div>
-    <div class="wheel-container">
-      <div class="pointer"></div>
-      <canvas id="canvas" width="300" height="300">
-        <p style="color: white" align="center">Sorry, your browser doesn't support canvas. Please try another.</p>
-      </canvas>
-    </div>
-    <button class="btn btn-christmas mt-4" onclick="startSpin()">Tirer au sort</button>
-    <div id="result" class="mt-4"></div>
-
-    <h2 class="mb-4">Envoyer un message à votre Père Noël secret</h2>
-    <form id="message-form">
-      <div class="form-group">
-        <textarea id="message" class="form-control" rows="4" placeholder="Écrivez votre message ici..."></textarea>
-      </div>
-      <button type="submit" class="btn btn-christmas btn-block">Envoyer</button>
-    </form>
-    <div id="message-status" class="mt-3"></div>
-
-    <button class="btn btn-christmas mt-2" onclick="logout()">Déconnexion</button>
-  </div>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const user = JSON.parse(localStorage.getItem('user'));
-      let pairReceiver = null;
-
-      if (user) {
-        console.log('Utilisateur chargé:', user); // Message de débogage
-        document.getElementById('welcome-message').textContent = `Bonjour, ${user.name}`;
-        const response = await fetch(`http://localhost:3000/api/pairs/${user.name}`);
-        if (response.ok) {
-          const data = await response.json();
-          pairReceiver = data.receiver;
-          console.log('Receiver from API:', pairReceiver);
-        } else {
-          console.error('Failed to fetch receiver from API');
-          document.getElementById('result').textContent = 'Aucune paire trouvée';
-        }
-      } else {
-        console.log('Aucun utilisateur trouvé dans localStorage'); // Message de débogage
-        window.location.href = '/';
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voir à qui je donne - Secret Santa</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
+    <script src="./Winwheel.min.js"></script>
+    <style>
+      .pointer {
+        position: relative;
+        top: 25px;
+        left: 45%;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 20px 40px 20px;
+        border-color: transparent transparent #ff0000 transparent;
+        transform: rotate(180deg);
       }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="container">
+      <div class="christmas-decoration">
+        <img
+          src="https://img.icons8.com/?size=100&id=p2t1QGXdZaMz&format=png&color=000000"
+          alt="Christmas Tree"
+        />
+        <img
+          src="https://img.icons8.com/emoji/96/000000/santa-claus-emoji.png"
+          alt="Santa Claus"
+        />
+        <img
+          src="https://img.icons8.com/emoji/96/000000/snowman-emoji.png"
+          alt="Snowman"
+        />
+      </div>
+      <h1 class="mb-4">Voir à qui je donne</h1>
+      <div id="welcome-message" class="mt-2"></div>
+      <div class="wheel-container">
+        <div class="pointer"></div>
+        <canvas id="canvas" width="300" height="300">
+          <p style="color: white" align="center">
+            Sorry, your browser doesn't support canvas. Please try another.
+          </p>
+        </canvas>
+      </div>
+      <button class="btn btn-christmas mt-4" onclick="startSpin()">
+        Tirer au sort
+      </button>
+      <div id="result" class="mt-4"></div>
 
-      const participants = ["Etienne", "Maéva", "Jean-Jacques", "Sandrine", "Antoinette", "Ketsia", "Léa", "André"];
-      const segments = participants.map(name => ({ fillStyle: getRandomColor(), text: name }));
+      <div id="message-form-container" class="mt-4">
+        <h2>Envoyer un message au Père Noël secret</h2>
+        <form id="message-form">
+          <div class="form-group">
+            <label for="message">Message :</label>
+            <textarea
+              id="message"
+              class="form-control"
+              rows="4"
+              required
+            ></textarea>
+          </div>
+          <button type="submit" class="btn btn-christmas mt-2">Envoyer</button>
+        </form>
+        <div id="message-result" class="mt-2"></div>
+      </div>
 
-      let theWheel = new Winwheel({
-        'numSegments': segments.length,
-        'outerRadius': 150,
-        'textFontSize': 16,
-        'segments': segments,
-        'animation': {
-          'type': 'spinToStop',
-          'duration': 5,
-          'spins': 8,
-          'callbackFinished': alertPrize
-        }
-      });
+      <button class="btn btn-christmas mt-2" onclick="logout()">
+        Déconnexion
+      </button>
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+        const user = JSON.parse(localStorage.getItem("user"));
+        let pairReceiver = null;
 
-      window.startSpin = function() {
-        if (pairReceiver) {
-          const winningSegmentIndex = participants.indexOf(pairReceiver);
-          if (winningSegmentIndex !== -1) {
-            const stopAngle = theWheel.getRandomForSegment(winningSegmentIndex + 1);
-            console.log('Calculated stop angle:', stopAngle);
-            theWheel.animation.stopAngle = stopAngle;
-            theWheel.startAnimation();
+        if (user) {
+          console.log("Utilisateur chargé:", user); // Message de débogage
+          document.getElementById(
+            "welcome-message"
+          ).textContent = `Bonjour, ${user.name}`;
+          const response = await fetch(
+            `http://localhost:3000/api/pairs/${user.name}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            pairReceiver = data.receiver;
+            console.log("Receiver from API:", pairReceiver);
           } else {
-            console.error('Receiver not found in participants list');
+            console.error("Failed to fetch receiver from API");
+            document.getElementById("result").textContent =
+              "Aucune paire trouvée";
           }
         } else {
-          console.error('No receiver found for the user');
+          console.log("Aucun utilisateur trouvé dans localStorage"); // Message de débogage
+          window.location.href = "/";
         }
-      }
 
-      function alertPrize(indicatedSegment) {
-        document.getElementById('result').textContent = `Vous donnez à : ${indicatedSegment.text}`;
-      }
+        const participants = [
+          "Etienne",
+          "Maéva",
+          "Jean-Jacques",
+          "Sandrine",
+          "Antoinette",
+          "Ketsia",
+          "Léa",
+          "André",
+          "Jacques",
+        ];
+        const segments = participants.map((name) => ({
+          fillStyle: getRandomColor(),
+          text: name,
+        }));
 
-      window.logout = async function() {
-        await fetch('http://localhost:3000/logout', {
-          method: 'GET',
-        });
-        localStorage.removeItem('user');
-        window.location.href = '/';
-      }
-
-      function getRandomColor() {
-        const letters = '0123456789ABCDEF';
-        let color = '#';
-        for (let i = 0; i < 6; i++) {
-          color += letters[Math.floor(Math.random() * 16)];
-        }
-        return color;
-      }
-    });
-
-    document.getElementById('message-form').addEventListener('submit', async function(event) {
-      event.preventDefault();
-      const message = document.getElementById('message').value;
-      const user = JSON.parse(localStorage.getItem('user'));
-      if (user && message) {
-        const response = await fetch('http://localhost:3000/api/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
+        let theWheel = new Winwheel({
+          numSegments: segments.length,
+          outerRadius: 150,
+          textFontSize: 16,
+          segments: segments,
+          animation: {
+            type: "spinToStop",
+            duration: 5,
+            spins: 8,
+            callbackFinished: alertPrize,
           },
-          body: JSON.stringify({ sender: user.name, message })
         });
-        if (response.ok) {
-          document.getElementById('message-status').textContent = 'Message envoyé avec succès!';
-          document.getElementById('message').value = '';
-        } else {
-          document.getElementById('message-status').textContent = 'Erreur lors de l\'envoi du message.';
+
+        window.startSpin = function () {
+          if (pairReceiver) {
+            const winningSegmentIndex = participants.indexOf(pairReceiver);
+            if (winningSegmentIndex !== -1) {
+              const stopAngle = theWheel.getRandomForSegment(
+                winningSegmentIndex + 1
+              );
+              console.log("Calculated stop angle:", stopAngle);
+              theWheel.animation.stopAngle = stopAngle;
+              theWheel.startAnimation();
+            } else {
+              console.error("Receiver not found in participants list");
+            }
+          } else {
+            console.error("No receiver found for the user");
+          }
+        };
+
+        function alertPrize(indicatedSegment) {
+          document.getElementById(
+            "result"
+          ).textContent = `Vous donnez à : ${indicatedSegment.text}`;
         }
-      } else {
-        document.getElementById('message-status').textContent = 'Veuillez vous connecter et écrire un message.';
-      }
-    });
-  </script>
-</body>
+
+        window.logout = async function () {
+          await fetch("http://localhost:3000/logout", {
+            method: "GET",
+          });
+          localStorage.removeItem("user");
+          window.location.href = "/";
+        };
+
+        function getRandomColor() {
+          const letters = "0123456789ABCDEF";
+          let color = "#";
+          for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+          }
+          return color;
+        }
+      });
+    </script>
+  </body>
 </html>
