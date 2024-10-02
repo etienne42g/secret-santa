@@ -1,12 +1,14 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
 const passport = require('./auth'); // Importer la configuration de Passport
 const routes = require('./routes');
-require('dotenv').config(); // Charger les variables d'environnement
-const PORT = process.env.PORT || 3000;
-
+const PORT = process.env.PORT;
+const jwt = require('jsonwebtoken');
+const secretKey = process.env.SECRET_KEY;
 const app = express();
+const pool = require('./db.js');
 
 // Middleware pour parser le JSON
 app.use(express.json());
@@ -27,14 +29,14 @@ app.use(express.static(path.join(__dirname)));
 
 // Middleware pour vérifier si l'utilisateur est authentifié
 function ensureAuthenticated(req, res, next) {
-  if (req.isAuthenticated()) {
+  if (req.isAuthenticated() || req.query.token) { //@TODO: Ajouter la vérification du token
     return next();
   }
   res.redirect('/');
 }
 
-// Utiliser les routes définies dans routes.js avec protection
-app.use('/api', ensureAuthenticated, routes);
+// Utiliser les routes définies dans routes.js avec protection //@TODO: Ajouter la protection des appels API
+app.use('/api', routes);
 
 // Fonction pour sécuriser les chemins de fichiers
 function securePath(filePath) {
@@ -45,6 +47,45 @@ function securePath(filePath) {
   }
   return resolvedPath;
 }
+
+async function getUserByName(username) {
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE name = $1', [username]);
+    return result.rows[0];
+  } catch (err) {
+    console.error('Error executing query', err.stack);
+    throw err;
+  }
+};
+
+app.get('/view-pair-token', async (req, res) => {
+  const token = req.query.token;
+
+  if (!token) {
+    return res.status(400).send('Token manquant');
+  }
+
+  try {
+    const decoded = jwt.verify(token, secretKey);
+    const username = decoded.name; //OK
+
+    const user = await getUserByName(username);
+    if (user.length === 0) {
+      return res.status(404).send('Utilisateur non trouvé');
+    }
+
+    res.send(`
+      <script>
+        localStorage.setItem('user', JSON.stringify(${JSON.stringify(user)}));
+        window.location.href = '/view-pair';
+      </script>
+    `);
+
+    //res.sendFile(securePath('view-pair.html'));
+  } catch (err) {
+    return res.status(400).send("Token invalide");
+  }
+});
 
 // Route pour servir la page principale
 app.get('/', (req, res) => {
@@ -78,7 +119,7 @@ app.get('/auth/google/callback', passport.authenticate('google', {
     });
 
 // Route pour servir la page "Voir à qui je donne"
-app.get('/view-pair', ensureAuthenticated, (req, res) => {
+app.get('/view-pair', (req, res) => {
   res.sendFile(securePath('view-pair.html'));
 });
 

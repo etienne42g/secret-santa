@@ -4,42 +4,40 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Voir à qui je donne - Secret Santa</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./style_viewpair.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/latest/TweenMax.min.js"></script>
     <script src="./Winwheel.min.js"></script>
+    <script src="./view-pair.js"></script>
     <style>
-      .pointer {
-        position: relative;
-        top: 25px;
-        left: 45%;
-        width: 0;
-        height: 0;
-        border-style: solid;
-        border-width: 0 20px 40px 20px;
-        border-color: transparent transparent #ff0000 transparent;
-        transform: rotate(180deg);
-      }
+      #app {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
     </style>
   </head>
-  <body>
+  <body class="p-4">
     <div id="app" class="container">
       <div class="christmas-decoration">
         <img
           src="https://img.icons8.com/?size=100&id=p2t1QGXdZaMz&format=png&color=000000"
           alt="Christmas Tree"
-        />
-        <img
-          src="https://img.icons8.com/emoji/96/000000/santa-claus-emoji.png"
-          alt="Santa Claus"
+          class="img-fluid"
         />
         <img
           src="https://img.icons8.com/emoji/96/000000/snowman-emoji.png"
           alt="Snowman"
+          class="img-fluid"
         />
       </div>
-      <h1 class="mb-4">Voir à qui je donne</h1>
-      <div id="welcome-message" class="mt-2"></div>
-      <div class="wheel-container">
+      <h1 class="mb-4 text-center">Voir à qui je donne</h1>
+      <div id="welcome-message" class="mt-2 text-center"></div>
+      <div class="wheel-container text-center">
         <div class="pointer"></div>
         <canvas id="canvas" width="300" height="300">
           <p style="color: white" align="center">
@@ -47,129 +45,29 @@
           </p>
         </canvas>
       </div>
-      <button class="btn btn-christmas mt-4" onclick="startSpin()">
+      <button class="btn btn-success mt-4" id="spin-button">
         Tirer au sort
       </button>
-      <div id="result" class="mt-4"></div>
+      <div id="result" class="mt-4 text-center"></div>
 
       <div id="message-form-container" class="mt-4">
-        <h2>Envoyer un message au Père Noël secret</h2>
+        <h2>Envoyer un message à mon Père Noël secret</h2>
         <form id="message-form">
           <div class="form-group">
-            <label for="message">Message :</label>
-            <textarea
-              id="message"
-              class="form-control"
-              rows="4"
-              required
-            ></textarea>
+            <textarea id="message" class="form-control" name="message" rows="5" cols="33">Pour Noël je voudrais ...</textarea>
           </div>
-          <button type="submit" class="btn btn-christmas mt-2">Envoyer</button>
+          <button type="submit" class="btn btn-success mt-2">Envoyer</button>
         </form>
         <div id="message-result" class="mt-2"></div>
+
+        <div id="message-list" class="mt-4">
+          <h2>Messages reçus</h2>
+          <ul class="list-group" id="message-list-content"></ul>
       </div>
 
-      <button class="btn btn-christmas mt-2" onclick="logout()">
+      <button class="btn btn-success mt-2" onclick="logout()">
         Déconnexion
       </button>
     </div>
-    <script>
-      document.addEventListener("DOMContentLoaded", async () => {
-        const user = JSON.parse(localStorage.getItem("user"));
-        let pairReceiver = null;
-
-        if (user) {
-          console.log("Utilisateur chargé:", user); // Message de débogage
-          document.getElementById(
-            "welcome-message"
-          ).textContent = `Bonjour, ${user.name}`;
-          const response = await fetch(
-            `http://localhost:3000/api/pairs/${user.name}`
-          );
-          if (response.ok) {
-            const data = await response.json();
-            pairReceiver = data.receiver;
-            console.log("Receiver from API:", pairReceiver);
-          } else {
-            console.error("Failed to fetch receiver from API");
-            document.getElementById("result").textContent =
-              "Aucune paire trouvée";
-          }
-        } else {
-          console.log("Aucun utilisateur trouvé dans localStorage"); // Message de débogage
-          window.location.href = "/";
-        }
-
-        const participants = [
-          "Etienne",
-          "Maéva",
-          "Jean-Jacques",
-          "Sandrine",
-          "Antoinette",
-          "Ketsia",
-          "Léa",
-          "André",
-          "Jacques",
-        ];
-        const segments = participants.map((name) => ({
-          fillStyle: getRandomColor(),
-          text: name,
-        }));
-
-        let theWheel = new Winwheel({
-          numSegments: segments.length,
-          outerRadius: 150,
-          textFontSize: 16,
-          segments: segments,
-          animation: {
-            type: "spinToStop",
-            duration: 5,
-            spins: 8,
-            callbackFinished: alertPrize,
-          },
-        });
-
-        window.startSpin = function () {
-          if (pairReceiver) {
-            const winningSegmentIndex = participants.indexOf(pairReceiver);
-            if (winningSegmentIndex !== -1) {
-              const stopAngle = theWheel.getRandomForSegment(
-                winningSegmentIndex + 1
-              );
-              console.log("Calculated stop angle:", stopAngle);
-              theWheel.animation.stopAngle = stopAngle;
-              theWheel.startAnimation();
-            } else {
-              console.error("Receiver not found in participants list");
-            }
-          } else {
-            console.error("No receiver found for the user");
-          }
-        };
-
-        function alertPrize(indicatedSegment) {
-          document.getElementById(
-            "result"
-          ).textContent = `Vous donnez à : ${indicatedSegment.text}`;
-        }
-
-        window.logout = async function () {
-          await fetch("http://localhost:3000/logout", {
-            method: "GET",
-          });
-          localStorage.removeItem("user");
-          window.location.href = "/";
-        };
-
-        function getRandomColor() {
-          const letters = "0123456789ABCDEF";
-          let color = "#";
-          for (let i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * 16)];
-          }
-          return color;
-        }
-      });
-    </script>
   </body>
 </html>

@@ -1,6 +1,9 @@
 const express = require('express');
 const pool = require('./db'); // Assurez-vous d'importer votre pool de connexion à la base de données
 const router = express.Router();
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+const secretKey = process.env.SECRET_KEY;
 
 // Route pour obtenir tous les utilisateurs
 router.get('/users', async (req, res) => {
@@ -20,10 +23,46 @@ function ensureAuthenticated(req, res, next) {
   }
   res.redirect('/login');
 }
+
+function generateToken(name) {
+  return jwt.sign({ name }, secretKey, { expiresIn: '1y' }); // Expire dans 1 an
+}
+
+// Route pour récupérer le message existant
+router.get('/messages/:sender/:receiver', async (req, res) => {
+  const { sender, receiver } = req.params;
+  try {
+    const result = await pool.query('SELECT message FROM messages WHERE sender = $1 AND receiver = $2', [sender, receiver]);
+    if (result.rows.length > 0) {
+      res.json(result.rows[0]);
+    } else {
+      res.status(404).send('Message not found Here');
+    }
+  } catch (error) {
+    console.error('Error fetching message:', error);
+    res.status(500).send('Erreur lors de la récupération du message');
+  }
+});
+
+// Route pour récupérer le message reçu
+router.get('/messagesreceived/:receiver', async (req, res) => {
+  const { receiver } = req.params;
+  try {
+    const result = await pool.query('SELECT sender, message FROM messages WHERE receiver = $1', [receiver]);
+    if (result.rows.length > 0) {
+      res.json(result.rows); // Renvoie tous les messages reçus
+    } else {
+      res.status(404).send('Messages not found');
+    }
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).send('Erreur lors de la récupération des messages');
+  }
+});
+
 // Route pour envoyer un message
 router.post('/messages', ensureAuthenticated, async (req, res) => {
   const { sender, receiver, message } = req.body;
-  console.log('Requête reçue:', req.body); // Log des données reçues
 
   try {
     // Insertion du message dans la base de données
@@ -92,7 +131,6 @@ function generatePairs(users) {
         receiver: receivers[i].name,
       });
     }
-  
     return pairs;
   }  
 
@@ -129,36 +167,19 @@ router.get('/pairs/:name', async (req, res) => {
     }
   });
 
-  // Route pour envoyer un message
-router.post('/api/messages', async (req, res) => {
-  const { sender, message } = req.body;
-
-  try {
-    // Vérifiez que l'utilisateur existe
-    const userResult = await pool.query('SELECT * FROM users WHERE name = $1', [sender]);
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+  router.get('/generate-link/:name', async (req, res) => {
+    const { name } = req.params;
+    if (!name) {
+      return res.status(400).send('Nom manquant');
     }
-
-    // Récupérez le Père Noël secret de l'utilisateur
-    const pairResult = await pool.query('SELECT receiver FROM pairs WHERE giver = $1', [sender]);
-    if (pairResult.rows.length === 0) {
-      return res.status(404).json({ message: 'Père Noël secret non trouvé' });
+  
+    try {
+      const token = generateToken(name);
+      res.status(200).json({ token });
+    } catch (error) {
+      console.error('Error generating link:', error);
+      res.status(500).send('Erreur lors de la génération du lien');
     }
-
-    const receiver = pairResult.rows[0].receiver;
-
-    // Insérez le message dans la base de données
-    await pool.query(
-      'INSERT INTO messages (sender, receiver, message) VALUES ($1, $2, $3)',
-      [sender, receiver, message]
-    );
-
-    res.json({ message: 'Message envoyé avec succès' });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Erreur du serveur');
-  }
-});
+  });
 
 module.exports = router;
