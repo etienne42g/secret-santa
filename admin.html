@@ -88,7 +88,7 @@
     });
 
     async function logout() {
-      await fetch('http://localhost:3000/logout', {
+      await fetch('/logout', {
         method: 'GET',
       });
       localStorage.removeItem('user');
@@ -99,10 +99,10 @@
       event.preventDefault();
       const name = document.getElementById('link-name').value;
       if (name) { //OK
-        const response = await fetch(`http://localhost:3000/api/generate-link/${name}`);
+        const response = await fetch(`/api/generate-link/${name}`);
         if (response.ok) {
           const data = await response.json();
-          const link = `http://localhost:3000/view-pair-token?token=${data.token}`;
+          const link = `/view-pair-token?token=${data.token}`;
           document.getElementById('generated-link').innerHTML = `<a href="${link}" target="_blank">${link}</a>`;
         } else {
           alert('Erreur lors de la génération du lien. admin');

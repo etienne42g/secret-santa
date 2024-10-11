@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', loadUsers);
 
 async function loadUsers() {
-  const response = await fetch('http://localhost:3000/api/users', {
+  const response = await fetch('/api/users', {
     method: 'GET',
   });
   const users = await response.json();
@@ -20,7 +20,7 @@ async function addUser() {
   }
 
   try {
-    const response = await fetch('http://localhost:3000/api/users', {
+    const response = await fetch('/api/users', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -41,14 +41,14 @@ async function addUser() {
 }
 
 async function deleteUser(id) {
-  await fetch(`http://localhost:3000/api/users/${id}`, {
+  await fetch(`/api/users/${id}`, {
     method: 'DELETE',
   });
   document.getElementById(`user-${id}`).remove();
 }
 
 async function generatePairs() {
-  const response = await fetch('http://localhost:3000/api/generate-pairs', {
+  const response = await fetch('/api/generate-pairs', {
     method: 'POST',
   });
   const pairs = await response.json();
@@ -57,7 +57,7 @@ async function generatePairs() {
 
 async function viewPair() {
   const name = document.getElementById('view-name').value;
-  const response = await fetch(`http://localhost:3000/api/pairs/${name}`, {
+  const response = await fetch(`/api/pairs/${name}`, {
     method: 'GET',
   });
   if (response.ok) {
@@ -95,7 +95,7 @@ function displayPair(pair) {
 }
 
 async function logout() {
-  await fetch('http://localhost:3000/logout', {
+  await fetch('/logout', {
     method: 'GET',
   });
   window.location.href = '/';

@@ -7,13 +7,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (user) {
     document.getElementById('welcome-message').textContent = `Bonjour, ${user.name}`;
     try {
-      const response = await fetch(`http://localhost:3000/api/pairs/${user.name}`);
+      const response = await fetch(`/api/pairs/${user.name}`);
       if (response.ok) {
         const data = await response.json();
         pairReceiver = data.receiver;
 
         // Charger le message existant depuis la base de données
-        const messageResponse = await fetch(`http://localhost:3000/api/messagewrite/${user.name}`);
+        const messageResponse = await fetch(`/api/messagewrite/${user.name}`);
         if (messageResponse.ok) {
           const messageData = await messageResponse.json();
           document.getElementById('message').value = messageData.message;
@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Récupérer les messages reçus depuis la base de données
 try {
-  const receivedMessagesResponse = await fetch(`http://localhost:3000/api/messagesreceived/${user.name}`);
+  const receivedMessagesResponse = await fetch(`/api/messagesreceived/${user.name}`);
   if (receivedMessagesResponse.ok) {
     const receivedMessagesData = await receivedMessagesResponse.json();
     const messageListContent = document.getElementById('message-list-content');
@@ -50,7 +50,7 @@ try {
 }}
 
   try {
-    const participantsResponse = await fetch('http://localhost:3000/api/users');
+    const participantsResponse = await fetch('/api/users');
     if (participantsResponse.ok) {
       const participantsData = await participantsResponse.json();
       participants = participantsData.map(participant => participant.name);
@@ -105,7 +105,7 @@ try {
   }
 
   window.logout = async function() {
-    await fetch('http://localhost:3000/logout', {
+    await fetch('/logout', {
       method: 'GET',
     });
     localStorage.removeItem('user');
@@ -118,7 +118,7 @@ try {
   const message = document.getElementById('message').value;
 
   try {
-    const santaclausResponse = await fetch(`http://localhost:3000/api/santaclaus/${user.name}`);
+    const santaclausResponse = await fetch(`/api/santaclaus/${user.name}`);
     if (!santaclausResponse.ok) {
       throw new Error('Failed to fetch Santa Claus');
     }
@@ -133,7 +133,7 @@ try {
       return;
     }
 
-    const response = await fetch('http://localhost:3000/api/messages', {
+    const response = await fetch('/api/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
