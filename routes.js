@@ -29,14 +29,14 @@ function generateToken(name) {
 }
 
 // Route pour récupérer le message existant
-router.get('/messages/:sender/:receiver', async (req, res) => {
-  const { sender, receiver } = req.params;
+router.get('/messagewrite/:sender', async (req, res) => {
+  const { sender } = req.params;
   try {
-    const result = await pool.query('SELECT message FROM messages WHERE sender = $1 AND receiver = $2', [sender, receiver]);
+    const result = await pool.query('SELECT message FROM messages WHERE sender = $1 ORDER BY id DESC LIMIT 1', [sender]);
     if (result.rows.length > 0) {
-      res.json(result.rows[0]);
+      res.json(result.rows[0]); // Renvoie le dernier message
     } else {
-      res.status(404).send('Message not found Here');
+      res.status(404).send('Message not found');
     }
   } catch (error) {
     console.error('Error fetching message:', error);
@@ -166,6 +166,21 @@ router.get('/pairs/:name', async (req, res) => {
       res.status(500).send('Server error');
     }
   });
+
+  // Route pour voir une paire spécifique
+router.get('/santaclaus/:name', async (req, res) => {
+  try {
+    const { name } = req.params;
+    const pair = await pool.query('SELECT * FROM pairs WHERE receiver = $1', [name]);
+    if (pair.rows.length === 0) {
+      return res.status(404).json({ message: 'Pair not found' });
+    }
+    res.json(pair.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
 
   router.get('/generate-link/:name', async (req, res) => {
     const { name } = req.params;

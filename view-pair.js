@@ -4,8 +4,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let user = JSON.parse(localStorage.getItem("user"));;
 
- console.log('test:', user);
-
   if (user) {
     document.getElementById('welcome-message').textContent = `Bonjour, ${user.name}`;
     try {
@@ -15,12 +13,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         pairReceiver = data.receiver;
 
         // Charger le message existant depuis la base de données
-        const messageResponse = await fetch(`http://localhost:3000/api/messages/${user.name}/${pairReceiver}`);
+        const messageResponse = await fetch(`http://localhost:3000/api/messagewrite/${user.name}`);
         if (messageResponse.ok) {
           const messageData = await messageResponse.json();
           document.getElementById('message').value = messageData.message;
         } else {
-          console.error('Failed to fetch message from API');
+          console.log('pas de message existant');
         }
       } else {
         console.error('Failed to fetch receiver from API');
@@ -114,31 +112,43 @@ try {
     window.location.href = '/';
   }
 
-  // Gestion de l'envoi du message
-  document.getElementById('message-form').addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const message = document.getElementById('message').value;
+ // Gestion de l'envoi du message
+ document.getElementById('message-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const message = document.getElementById('message').value;
+
+  try {
+    const santaclausResponse = await fetch(`http://localhost:3000/api/santaclaus/${user.name}`);
+    if (!santaclausResponse.ok) {
+      throw new Error('Failed to fetch Santa Claus');
+    }
+    const santaclausData = await santaclausResponse.json();
+    const santaclaus = santaclausData.giver;
+
+    console.log("santaclaus", santaclaus);
+
     if (!pairReceiver) {
       console.error('pairReceiver is null');
       document.getElementById('message-result').textContent = 'Erreur : destinataire non défini.';
       return;
     }
-    try {
-      const response = await fetch('http://localhost:3000/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ sender: user.name, receiver: pairReceiver, message: message })
-      });
-      if (response.ok) {
-        document.getElementById('message-result').textContent = 'Message envoyé avec succès !';
-      } else {
-        document.getElementById('message-result').textContent = 'Échec de l\'envoi du message.';
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-      document.getElementById('message-result').textContent = 'Erreur lors de l\'envoi du message.';
+
+    const response = await fetch('http://localhost:3000/api/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ sender: user.name, receiver: santaclaus, message: message })
+    });
+
+    if (response.ok) {
+      document.getElementById('message-result').textContent = 'Message envoyé avec succès !';
+    } else {
+      document.getElementById('message-result').textContent = 'Échec de l\'envoi du message.';
     }
-  });
+  } catch (error) {
+    console.error('Error sending message:', error);
+    document.getElementById('message-result').textContent = 'Erreur lors de l\'envoi du message.';
+  }
+});
 });
