@@ -6,6 +6,14 @@
   <title>Connexion - Secret Santa</title>
   <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
   <style>
+    .christmas-decoration {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .christmas-decoration img {
+      width: 100px;
+      height: auto;
+    }
     body {
       background-color: #f8f9fa;
       background-image: url('https://www.transparenttextures.com/patterns/brick-wall-dark.png');
@@ -29,14 +37,6 @@
     .btn-christmas:hover {
       background-color: #218838;
     }
-    .christmas-decoration {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .christmas-decoration img {
-      width: 100px;
-      height: auto;
-    }
   </style>
 </head>
 <body>
@@ -47,9 +47,38 @@
     </div>
     <h1 class="mb-4">Connexion</h1>
     <a href="/auth/google" class="btn btn-christmas btn-block mb-4">Se connecter avec Google</a>
+    <button id="open-browser-button" class="btn btn-primary btn-block mb-4">Ouvrir dans le navigateur</button>
   </div>
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    function isInWebView() {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      return /FBAN|FBAV|Instagram/.test(userAgent);
+    }
+
+    function openInExternalBrowser() {
+      const url = 'https://santa.etiennegrz.fr/auth/google';
+
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+
+      if (/iPhone|iPad|iPod/i.test(userAgent)) {
+        // iOS
+        window.open(url, '_blank');
+      } else if (/Android/i.test(userAgent)) {
+        // Android
+        window.location.href = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
+      } else {
+        // Other platforms
+        window.location.href = url;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const openBrowserButton = document.getElementById('open-browser-button');
+      openBrowserButton.addEventListener('click', openInExternalBrowser);
+    });
+  </script>
 </body>
 </html>
